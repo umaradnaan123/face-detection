@@ -6,3 +6,4 @@ p
 pillow
 tensorflow
 protobuf
+opencv-contrib-python-headless
