@@ -2,15 +2,15 @@ import streamlit as st
 import cv2  # Ensure OpenCV is installed
 import numpy as np
 from deepface import DeepFace  # Ensure DeepFace is installed
-import os
 from PIL import Image  # Ensure Pillow is installed
 import tensorflow as tf  # Ensure TensorFlow is installed
+import os
 
-# Suppress TensorFlow and oneDNN warnings
+# Suppress TensorFlow warnings
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
-tf.get_logger().setLevel('ERROR')  # Suppresses most TensorFlow logs
+tf.get_logger().setLevel('ERROR')
 
-# Set Streamlit page config for theme
+# Set Streamlit page config
 st.set_page_config(page_title="Real-Time Emotion Detection", page_icon="😊", layout="wide")
 
 # Custom CSS for background styling
@@ -31,7 +31,7 @@ st.markdown(
 
 st.title("😊 Real-Time Emotion Detection")
 
-# Check if running on Streamlit Cloud or local environment
+# Check if running on Streamlit Cloud
 is_cloud = os.getenv("STREAMLIT_SERVER_PORT") is not None
 
 if is_cloud:
@@ -40,7 +40,7 @@ if is_cloud:
 else:
     use_webcam = True
 
-# Load Haar Cascade classifier for face detection
+# Load Haar Cascade classifier
 try:
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 except Exception as e:
@@ -54,7 +54,6 @@ if use_webcam:
         st.error("Error: Could not open webcam.")
         st.stop()
 else:
-    # Use a static image for testing in cloud environments
     static_image_path = "test_image.jpg"
     if not os.path.exists(static_image_path):
         st.error(f"Static image not found at path: {static_image_path}")
@@ -67,7 +66,7 @@ else:
 frame_placeholder = st.empty()
 stop_button_pressed = False
 
-# Button to stop the camera or processing
+# Button to stop processing
 stop_button = st.button("Stop", key="stop_button")
 if stop_button:
     stop_button_pressed = True
@@ -89,11 +88,8 @@ while (use_webcam and cap.isOpened() and not stop_button_pressed) or (not use_we
     for (x, y, w, h) in faces:
         face = frame[y:y + h, x:x + w]
         try:
-            # Analyze emotion using DeepFace
             result = DeepFace.analyze(face, actions=['emotion'], enforce_detection=False)
             emotion = result[0]['dominant_emotion'] if isinstance(result, list) else result['dominant_emotion']
-            
-            # Draw rectangle around the face and display emotion
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(frame, f"Emotion: {emotion}", (x, y - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
