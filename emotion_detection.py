@@ -1,29 +1,10 @@
-import os
-import sys
-import subprocess
 import streamlit as st
-
-# Function to install missing dependencies
-def install_dependency(package):
-    try:
-        __import__(package)
-    except ImportError:
-        st.warning(f"Installing missing dependency: {package}")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-# Install all required dependencies
-install_dependency("streamlit")
-install_dependency("opencv-python-headless")  # Ensures OpenCV is installed (headless version)
-install_dependency("deepface")
-install_dependency("pillow")
-install_dependency("tensorflow")
-
-# Import libraries after ensuring they are installed
-import cv2  # Installed via `opencv-python-headless`
+import cv2  # Ensure OpenCV is installed via `opencv-python-headless`
 import numpy as np
 from deepface import DeepFace
 from PIL import Image
 import tensorflow as tf
+import os
 
 # Suppress TensorFlow warnings
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
