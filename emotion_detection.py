@@ -3,7 +3,6 @@ import cv2  # Ensure OpenCV is installed
 import numpy as np
 from deepface import DeepFace  # Ensure DeepFace is installed
 import os
-import io
 from PIL import Image  # Ensure Pillow is installed
 import tensorflow as tf  # Ensure TensorFlow is installed
 
@@ -32,34 +31,56 @@ st.markdown(
 
 st.title("😊 Real-Time Emotion Detection")
 
-# Initialize webcam using OpenCV
-cap = cv2.VideoCapture(0)
-if not cap.isOpened():
-    st.error("Error: Could not open webcam.")
-    cap.release()
-    st.stop()
+# Check if running on Streamlit Cloud or local environment
+is_cloud = os.getenv("STREAMLIT_SERVER_PORT") is not None
 
-# Load the Haar Cascade classifier for face detection
+if is_cloud:
+    st.warning("Webcam access is not supported in Streamlit Cloud. Using a static image for testing.")
+    use_webcam = False
+else:
+    use_webcam = True
+
+# Load Haar Cascade classifier for face detection
 try:
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 except Exception as e:
     st.error(f"Error loading Haar Cascade: {e}")
-    cap.release()
     st.stop()
+
+# Initialize webcam or static image
+if use_webcam:
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        st.error("Error: Could not open webcam.")
+        st.stop()
+else:
+    # Use a static image for testing in cloud environments
+    static_image_path = "test_image.jpg"
+    if not os.path.exists(static_image_path):
+        st.error(f"Static image not found at path: {static_image_path}")
+        st.stop()
+    frame = cv2.imread(static_image_path)
+    if frame is None:
+        st.error("Error: Could not load static image.")
+        st.stop()
 
 frame_placeholder = st.empty()
 stop_button_pressed = False
 
-# Button to stop the camera
-stop_button = st.button("Stop Camera", key="stop_button")
+# Button to stop the camera or processing
+stop_button = st.button("Stop", key="stop_button")
 if stop_button:
     stop_button_pressed = True
 
-while cap.isOpened() and not stop_button_pressed:
-    ret, frame = cap.read()
-    if not ret:
-        st.error("Failed to capture image")
-        break
+while (use_webcam and cap.isOpened() and not stop_button_pressed) or (not use_webcam and not stop_button_pressed):
+    if use_webcam:
+        ret, frame = cap.read()
+        if not ret:
+            st.error("Failed to capture image from webcam.")
+            break
+    else:
+        # Use the static image for cloud environments
+        pass
 
     # Convert frame to grayscale for face detection
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -88,6 +109,8 @@ while cap.isOpened() and not stop_button_pressed:
     if stop_button:
         stop_button_pressed = True
 
-# Release the webcam and clean up
-cap.release()
-st.write("✅ Camera released. Application terminated.")
+# Release the webcam if it was used
+if use_webcam:
+    cap.release()
+
+st.write("✅ Processing terminated.")
